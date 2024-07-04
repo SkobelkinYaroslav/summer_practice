@@ -1,24 +1,17 @@
 [
   {
-    "id": 1,
-    "brand": "Toyota",
-    "model": "Corolla",
-    "mileage": 12345,
-    "owners_count": 0
-  },
-  {
     "id": 2,
-    "brand": "Honda",
-    "model": "Civic",
-    "mileage": 67890,
-    "owners_count": 0
+    "brand": "Tesla",
+    "model": "X",
+    "mileage": 100,
+    "owners_count": 1
   },
   {
     "id": 3,
-    "brand": "Ford",
-    "model": "Focus",
-    "mileage": 54321,
-    "owners_count": 0
+    "brand": "Toyota",
+    "model": "Mark2",
+    "mileage": 100,
+    "owners_count": 1
   },
   {
     "id": 4,
@@ -29,22 +22,8 @@
   },
   {
     "id": 5,
-    "brand": "Tesla",
-    "model": "X",
-    "mileage": 100,
-    "owners_count": 1
-  },
-  {
-    "id": 6,
-    "brand": "Tesla",
-    "model": "X",
-    "mileage": 100,
-    "owners_count": 1
-  },
-  {
-    "id": 7,
-    "brand": "Tesla",
-    "model": "X",
+    "brand": "Toyota",
+    "model": "Mark2",
     "mileage": 100,
     "owners_count": 1
   }

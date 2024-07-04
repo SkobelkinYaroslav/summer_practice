@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"summer_practice/internal/domain"
+	"log"
 	database "summer_practice/pkg"
+	"time"
 )
 
 //func init() {
@@ -15,15 +15,26 @@ import (
 
 func main() {
 	db := database.New("data.json")
-	//fmt.Println(db.GetRow(1))
-	fmt.Println(db)
-	car := domain.Car{
-		ID:          1337,
-		Brand:       "Tesla",
-		Model:       "X",
-		Mileage:     100,
-		OwnersCount: 1,
+	//car1 := domain.Car{
+	//	ID:          1337,
+	//	Brand:       "Tesla",
+	//	Model:       "X",
+	//	Mileage:     100,
+	//	OwnersCount: 1,
+	//}
+	//car2 := domain.Car{
+	//	ID:          1338,
+	//	Brand:       "Toyota",
+	//	Model:       "Mark2",
+	//	Mileage:     100,
+	//	OwnersCount: 1,
+	//}
+
+	rows, err := db.GetAllRows()
+	if err != nil {
+		log.Fatalln(err)
 	}
-	db.AddRow(car)
-	fmt.Println(db)
+	log.Println(rows)
+	time.Sleep(20 * time.Second)
+
 }
