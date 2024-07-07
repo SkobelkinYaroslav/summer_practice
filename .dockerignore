@@ -1,0 +1,5 @@
+.idea
+.env
+.dockerignore
+.gitignore
+data.json

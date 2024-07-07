@@ -46,8 +46,8 @@ func New(fileName string) *DataBase {
 		}
 	}
 
-	var lastIndex int
-	if fileRows != nil && len(fileRows) > 0 {
+	lastIndex := 1
+	if fileRows != nil {
 		lastIndex = fileRows[len(fileRows)-1].ID + 1
 	}
 
