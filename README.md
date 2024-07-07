@@ -1,4 +1,4 @@
-Выполнил Скобелкин Ярослав в рамказ [летней практики в mediasoft](https://docs.google.com/document/d/1-laS0wKfca9m3r0FOBkMI1GuZ6HSyC73/edit)
+Выполнил Скобелкин Ярослав в рамках [летней практики в mediasoft](https://docs.google.com/document/d/1-laS0wKfca9m3r0FOBkMI1GuZ6HSyC73/edit)
 
 > Для запуска требуется Docker
 
