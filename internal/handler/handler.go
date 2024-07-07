@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -12,8 +11,8 @@ type CarService interface {
 	CreateCarService(car domain.Car) (domain.Car, error)
 	GetAllCarsService() ([]domain.Car, error)
 	GetCarByIdService(id int) (domain.Car, error)
-	UpdateCarByIdService(car domain.Car) (domain.Car, error)
-	PatchCarByIdService(car domain.Car) (domain.Car, error)
+	PutCarByIdService(car domain.Car) (domain.Car, error)
+	PatchCarByIdService(fieldsToUpdate map[string]interface{}) (domain.Car, error)
 	DeleteCarService(id int) error
 }
 
@@ -21,7 +20,7 @@ type CarHandler struct {
 	Service CarService
 }
 
-func NewCarHandler(svc CarService) *gin.Engine {
+func New(svc CarService) *gin.Engine {
 	handler := &CarHandler{
 		Service: svc,
 	}
@@ -31,8 +30,8 @@ func NewCarHandler(svc CarService) *gin.Engine {
 	g.POST("/cars", handler.CreateCarHandler)
 	g.GET("/cars", handler.GetAllCarsHandler)
 	g.GET("/cars/:id", handler.GetCarByIdHandler)
-	g.PUT("/cars/:id", handler.UpdateCarByIdHandler)
-	g.PATCH("/cars/:id", handler.UpdateCarByIdHandler)
+	g.PUT("/cars/:id", handler.PutCarByIdHandler)
+	g.PATCH("/cars/:id", handler.PatchCarByIdHandler)
 	g.DELETE("/cars/:id", handler.DeleteCarHandler)
 
 	return g
@@ -42,13 +41,14 @@ func (h *CarHandler) CreateCarHandler(c *gin.Context) {
 	var car domain.Car
 
 	if err := c.BindJSON(&car); err != nil {
-		c.JSON(http.StatusBadRequest, domain.ErrBadParamInput)
+		c.JSON(http.StatusBadRequest, gin.H{"error": domain.ErrBadParamInput.Error()})
 		return
 	}
 
 	carOutput, err := h.Service.CreateCarService(car)
+
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, domain.ErrInternalServerError)
+		c.JSON(getStatusCode(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -60,12 +60,7 @@ func (h *CarHandler) GetAllCarsHandler(c *gin.Context) {
 	cars, err := h.Service.GetAllCarsService()
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, domain.ErrInternalServerError)
-		return
-	}
-
-	if len(cars) == 0 {
-		c.JSON(http.StatusNotFound, domain.ErrNotFound)
+		c.JSON(getStatusCode(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -78,52 +73,43 @@ func (h *CarHandler) GetCarByIdHandler(c *gin.Context) {
 	idInt, err := strconv.Atoi(idStr)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, domain.ErrBadParamInput)
+		c.JSON(getStatusCode(domain.ErrBadParamInput), gin.H{"error": domain.ErrBadParamInput.Error()})
 		return
 	}
 
 	car, err := h.Service.GetCarByIdService(idInt)
 
-	if errors.Is(err, domain.ErrNotFound) {
-		c.JSON(http.StatusNotFound, domain.ErrNotFound)
-		return
-	}
-
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, domain.ErrInternalServerError)
+		c.JSON(getStatusCode(err), gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, car)
 }
 
-func (h *CarHandler) UpdateCarByIdHandler(c *gin.Context) {
+func (h *CarHandler) PutCarByIdHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	idInt, err := strconv.Atoi(idStr)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, domain.ErrBadParamInput)
+		c.JSON(getStatusCode(domain.ErrBadParamInput), gin.H{"error": domain.ErrBadParamInput.Error()})
 		return
 	}
 
 	var car domain.Car
 
-	if err := c.BindJSON(&car); err != nil {
-		c.JSON(http.StatusBadRequest, domain.ErrBadParamInput)
+	err = c.BindJSON(&car)
+	if err != nil {
+		c.JSON(getStatusCode(domain.ErrBadParamInput), gin.H{"error": domain.ErrBadParamInput.Error()})
 		return
 	}
 
 	car.ID = idInt
 
-	carOutput, err := h.Service.UpdateCarByIdService(car)
-
-	if errors.Is(err, domain.ErrNotFound) {
-		c.JSON(http.StatusNotFound, domain.ErrNotFound)
-		return
-	}
+	carOutput, err := h.Service.PutCarByIdService(car)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, domain.ErrInternalServerError)
+		c.JSON(getStatusCode(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -136,46 +122,61 @@ func (h *CarHandler) PatchCarByIdHandler(c *gin.Context) {
 	idInt, err := strconv.Atoi(idStr)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, domain.ErrBadParamInput)
+		c.JSON(getStatusCode(domain.ErrBadParamInput), gin.H{"error": domain.ErrBadParamInput.Error()})
 		return
 	}
 
-	var car domain.Car
+	var fieldsToUpdate map[string]interface{}
 
-	if err := c.BindJSON(&car); err != nil {
-		c.JSON(http.StatusBadRequest, domain.ErrBadParamInput)
+	err = c.BindJSON(&fieldsToUpdate)
+	if err != nil {
+		c.JSON(getStatusCode(err), gin.H{"error": err.Error()})
 		return
 	}
 
-	car.ID = idInt
+	fieldsToUpdate["id"] = idInt
 
-	carOutput, err := h.Service.PatchCarByIdService(car)
-
-	if errors.Is(err, domain.ErrNotFound) {
-		c.JSON(http.StatusNotFound, domain.ErrNotFound)
-		return
-	}
+	carOutput, err := h.Service.PatchCarByIdService(fieldsToUpdate)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, domain.ErrInternalServerError)
+		c.JSON(getStatusCode(err), gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, carOutput)
 }
+
 func (h *CarHandler) DeleteCarHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	idInt, err := strconv.Atoi(idStr)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, domain.ErrBadParamInput)
+		c.JSON(getStatusCode(domain.ErrBadParamInput), gin.H{"error": domain.ErrBadParamInput.Error()})
 		return
 	}
+	err = h.Service.DeleteCarService(idInt)
 
-	if err := h.Service.DeleteCarService(idInt); err != nil {
-		c.JSON(http.StatusInternalServerError, domain.ErrInternalServerError)
+	if err != nil {
+		c.JSON(getStatusCode(err), gin.H{"error": err.Error()})
 		return
 	}
 
 	c.AbortWithStatus(http.StatusNoContent)
+}
+
+func getStatusCode(err error) int {
+	if err == nil {
+		return http.StatusOK
+	}
+
+	switch err {
+	case domain.ErrInternalServerError:
+		return http.StatusInternalServerError
+	case domain.ErrNotFound:
+		return http.StatusNotFound
+	case domain.ErrConflict:
+		return http.StatusConflict
+	default:
+		return http.StatusInternalServerError
+	}
 }
