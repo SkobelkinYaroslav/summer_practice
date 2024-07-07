@@ -3,7 +3,7 @@
 > Для запуска требуется Docker
 
 Запуск приложения:
-1. Скачайте приложение
+1. Скачайте проект
 ```
    git clone https://github.com/SkobelkinYaroslav/summer_practice.git
 ```
