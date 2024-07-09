@@ -27,12 +27,15 @@ func New(svc CarService) *gin.Engine {
 
 	g := gin.Default()
 
-	g.POST("/cars", handler.CreateCarHandler)
-	g.GET("/cars", handler.GetAllCarsHandler)
-	g.GET("/cars/:id", handler.GetCarByIdHandler)
-	g.PUT("/cars/:id", handler.PutCarByIdHandler)
-	g.PATCH("/cars/:id", handler.PatchCarByIdHandler)
-	g.DELETE("/cars/:id", handler.DeleteCarHandler)
+	cars := g.Group("/cars")
+	{
+		cars.POST("/", handler.CreateCarHandler)
+		cars.GET("/", handler.GetAllCarsHandler)
+		cars.GET("/:id", handler.GetCarByIdHandler)
+		cars.PUT("/:id", handler.PutCarByIdHandler)
+		cars.PATCH("/:id", handler.PatchCarByIdHandler)
+		cars.DELETE("/:id", handler.DeleteCarHandler)
+	}
 
 	return g
 }
