@@ -33,6 +33,7 @@ func (s *CarService) CreateCarService(car domain.Car) (domain.Car, error) {
 	}
 	return carOutput, nil
 }
+
 func (s *CarService) GetAllCarsService() ([]domain.Car, error) {
 	carArray, err := s.Repository.GetAllCarsRepository()
 
@@ -66,6 +67,7 @@ func (s *CarService) PutCarByIdService(car domain.Car) (domain.Car, error) {
 	}
 	return carOutput, nil
 }
+
 func (s *CarService) PatchCarByIdService(fieldsToUpdate map[string]interface{}) (domain.Car, error) {
 	if model, ok := fieldsToUpdate["model"]; ok && model.(string) == "" {
 		return domain.Car{}, domain.ErrBadParamInput

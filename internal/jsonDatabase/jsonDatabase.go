@@ -11,7 +11,8 @@ import (
 type operationType int
 
 const (
-	addOperation operationType = iota
+	maxOperations               = 100
+	addOperation  operationType = iota
 	putOperation
 	deleteOperation
 	readOperation
@@ -31,7 +32,7 @@ type DataBase struct {
 	fileName  string
 	rows      []domain.Car
 	lastIndex int
-	queue     []operation
+	queue     chan operation
 }
 
 func New(fileName string) *DataBase {
@@ -55,31 +56,27 @@ func New(fileName string) *DataBase {
 		fileName:  fileName,
 		rows:      fileRows,
 		lastIndex: lastIndex,
-		queue:     make([]operation, 0),
+		queue:     make(chan operation, maxOperations),
 	}
 	go db.processOperations()
 	return db
 }
 
 func (db *DataBase) processOperations() {
-	for {
-		if len(db.queue) > 0 {
-			op := db.queue[0]
-			db.queue = db.queue[1:]
-			switch op.Type {
-			case addOperation:
-				db.addRow(op.Row, op.Result)
-			case putOperation:
-				db.putRow(op.Row, op.Result)
-			case deleteOperation:
-				db.deleteRow(op.ID, op.Result)
-			case readOperation:
-				db.readRow(op.ID, op.Result)
-			case readAllOperation:
-				db.readAllRows(op.Result)
-			case updateFieldsOperation:
-				db.updateFieldsByID(op.ID, op.FieldsToUpdate, op.Result)
-			}
+	for op := range db.queue {
+		switch op.Type {
+		case addOperation:
+			db.addRow(op.Row, op.Result)
+		case putOperation:
+			db.putRow(op.Row, op.Result)
+		case deleteOperation:
+			db.deleteRow(op.ID, op.Result)
+		case readOperation:
+			db.readRow(op.ID, op.Result)
+		case readAllOperation:
+			db.readAllRows(op.Result)
+		case updateFieldsOperation:
+			db.updateFieldsByID(op.ID, op.FieldsToUpdate, op.Result)
 		}
 	}
 }
@@ -88,7 +85,7 @@ func (db *DataBase) AddRow(row domain.Car) (domain.Car, error) {
 	resultChan := make(chan interface{})
 	defer close(resultChan)
 
-	db.queue = append(db.queue, operation{Type: addOperation, Row: row, Result: resultChan})
+	db.queue <- operation{Type: addOperation, Row: row, Result: resultChan}
 
 	result := <-resultChan
 
@@ -107,7 +104,7 @@ func (db *DataBase) PutRow(newRow domain.Car) (domain.Car, error) {
 	resultChan := make(chan interface{})
 	defer close(resultChan)
 
-	db.queue = append(db.queue, operation{Type: putOperation, Row: newRow, Result: resultChan})
+	db.queue <- operation{Type: putOperation, Row: newRow, Result: resultChan}
 
 	result := <-resultChan
 	switch res := result.(type) {
@@ -124,7 +121,7 @@ func (db *DataBase) DeleteRow(id int) error {
 	resultChan := make(chan interface{})
 	defer close(resultChan)
 
-	db.queue = append(db.queue, operation{Type: deleteOperation, ID: id, Result: resultChan})
+	db.queue <- operation{Type: deleteOperation, ID: id, Result: resultChan}
 
 	result := <-resultChan
 	switch res := result.(type) {
@@ -141,7 +138,7 @@ func (db *DataBase) GetRow(id int) (domain.Car, error) {
 	resultChan := make(chan interface{})
 	defer close(resultChan)
 
-	db.queue = append(db.queue, operation{Type: readOperation, ID: id, Result: resultChan})
+	db.queue <- operation{Type: readOperation, ID: id, Result: resultChan}
 
 	result := <-resultChan
 	switch res := result.(type) {
@@ -158,7 +155,7 @@ func (db *DataBase) GetAllRows() ([]domain.Car, error) {
 	resultChan := make(chan interface{})
 	defer close(resultChan)
 
-	db.queue = append(db.queue, operation{Type: readAllOperation, Result: resultChan})
+	db.queue <- operation{Type: readAllOperation, Result: resultChan}
 
 	result := <-resultChan
 	switch res := result.(type) {
@@ -175,7 +172,7 @@ func (db *DataBase) UpdateRow(fieldsToUpdate map[string]interface{}) (domain.Car
 	resultChan := make(chan interface{})
 	defer close(resultChan)
 
-	db.queue = append(db.queue, operation{Type: updateFieldsOperation, ID: fieldsToUpdate["id"].(int), FieldsToUpdate: fieldsToUpdate, Result: resultChan})
+	db.queue <- operation{Type: updateFieldsOperation, ID: fieldsToUpdate["id"].(int), FieldsToUpdate: fieldsToUpdate, Result: resultChan}
 
 	result := <-resultChan
 	switch res := result.(type) {
